@@ -1,0 +1,18 @@
+{
+  "name": "PMU Cash Trainer",
+  "short_name": "Cash Trainer",
+  "description": "Entraîneur rendu monnaie PMU",
+  "icons": [
+    {
+      "src": "PMU_app_logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1f14",
+  "theme_color": "#00843D",
+  "orientation": "portrait"
+}

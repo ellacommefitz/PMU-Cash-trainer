@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PMU — Entraîneur Rendu Monnaie</title>
+<link rel="icon" type="image/png" href="PMU_app_logo.png">
+<link rel="apple-touch-icon" href="PMU_app_logo.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00843D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cash Trainer">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green:#1a7a4a;--green-light:#2ca062;--green-dark:#0f4f2f;
+  --gold:#c8963e;--gold-light:#e8b86d;
+  --cream:#f5f0e8;--dark:#0d1f14;
+  --red:#c0392b;--red-light:#e74c3c;
+  --gray:#8a9e8f;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--cream);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 0%,rgba(26,122,74,.22) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(200,150,62,.1) 0%,transparent 60%);pointer-events:none;z-index:0;}
+.app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding-bottom:60px;}
+
+/* HEADER */
+.header{padding:24px 20px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(200,150,62,.2);}
+.logo{width:42px;height:42px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:19px;color:var(--dark);box-shadow:0 4px 12px rgba(200,150,62,.3);flex-shrink:0;}
+.header-text h1{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:1.5px;color:var(--gold);line-height:1;}
+.header-text p{font-size:10px;color:var(--gray);letter-spacing:.5px;margin-top:2px;}
+
+/* MODE SWITCH */
+.mode-switch{display:flex;margin:14px 20px 0;gap:8px;}
+.mode-btn{flex:1;padding:10px 6px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--gray);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center;}
+.mode-btn span{display:block;font-size:16px;margin-bottom:2px;}
+.mode-btn.active-normal{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 3px 10px rgba(26,122,74,.4);}
+.mode-btn.active-chrono{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 3px 10px rgba(192,57,43,.4);}
+
+/* LEVEL TABS */
+.levels{display:flex;gap:6px;padding:12px 20px 8px;overflow-x:auto;scrollbar-width:none;}
+.levels::-webkit-scrollbar{display:none;}
+.level-btn{flex-shrink:0;padding:6px 13px;border-radius:20px;border:1px solid rgba(255,255,255,.12);background:transparent;color:var(--gray);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;}
+.level-btn.active{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 3px 10px rgba(26,122,74,.4);}
+
+/* CHRONO HEADER */
+.chrono-header{display:none;margin:8px 20px 0;background:rgba(192,57,43,.12);border:1px solid rgba(192,57,43,.3);border-radius:14px;padding:12px 16px;align-items:center;gap:12px;}
+.chrono-header.show{display:flex;}
+.chrono-big{font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--cream);line-height:1;min-width:80px;transition:color .3s;}
+.chrono-big.warning{color:#f39c12;}
+.chrono-big.danger{color:var(--red-light);animation:pulse-red .5s infinite alternate;}
+@keyframes pulse-red{from{opacity:1;}to{opacity:.5;}}
+.chrono-right{flex:1;}
+.chrono-label{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);}
+.chrono-bar-wrap{height:6px;background:rgba(255,255,255,.08);border-radius:3px;margin-top:6px;overflow:hidden;}
+.chrono-bar-fill{height:100%;border-radius:3px;transition:width .1s linear,background .3s;}
+.chrono-target{font-size:11px;color:var(--gray);margin-top:5px;}
+.chrono-target strong{color:var(--gold);}
+
+/* PALIER BADGE */
+.palier-badge{display:none;margin:8px 20px 0;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:600;align-items:center;gap:8px;}
+.palier-badge.show{display:flex;}
+.palier-badge.bronze{background:rgba(176,141,87,.2);border:1px solid rgba(176,141,87,.4);color:#c9a96e;}
+.palier-badge.argent{background:rgba(150,160,170,.2);border:1px solid rgba(150,160,170,.4);color:#bcc8d4;}
+.palier-badge.or{background:rgba(200,150,62,.2);border:1px solid rgba(200,150,62,.4);color:var(--gold-light);}
+.palier-badge.platine{background:rgba(80,200,180,.2);border:1px solid rgba(80,200,180,.4);color:#7dfff0;}
+
+/* SCOREBAR */
+.scorebar{display:flex;gap:8px;padding:12px 20px;background:rgba(255,255,255,.02);border-bottom:1px solid rgba(255,255,255,.05);}
+.score-pill{flex:1;text-align:center;padding:7px 4px;background:rgba(255,255,255,.05);border-radius:10px;border:1px solid rgba(255,255,255,.07);}
+.score-pill .val{font-family:'Bebas Neue',sans-serif;font-size:22px;line-height:1;display:block;}
+.score-pill .lbl{font-size:8px;color:var(--gray);letter-spacing:.8px;text-transform:uppercase;}
+.score-pill.good .val{color:var(--green-light);}
+.score-pill.bad .val{color:var(--red-light);}
+.score-pill.streak .val{color:var(--gold);}
+.score-pill.avgtime .val{color:var(--cream);}
+
+/* PROGRESS */
+.progress-bar{margin:0 20px 6px;height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--gold));border-radius:2px;transition:width .4s ease;}
+
+/* CARD */
+.card{margin:6px 20px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:20px;overflow:hidden;position:relative;animation:slideUp .3s ease;}
+@keyframes slideUp{from{transform:translateY(16px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.card-header{padding:14px 18px 12px;background:rgba(26,122,74,.14);border-bottom:1px solid rgba(26,122,74,.22);display:flex;justify-content:space-between;align-items:center;}
+.type-badge{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--green-light);background:rgba(26,122,74,.3);padding:3px 9px;border-radius:20px;}
+.q-count{font-family:'DM Mono',monospace;font-size:12px;color:var(--gray);}
+.ticket-section{padding:16px 18px 10px;}
+.ticket-label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:8px;}
+.paris-list{background:rgba(0,0,0,.2);border-radius:11px;padding:10px 13px;margin-bottom:10px;border:1px solid rgba(255,255,255,.05);}
+.paris-item{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px dashed rgba(255,255,255,.07);font-size:13px;}
+.paris-item:last-child{border-bottom:none;}
+.paris-item .p-type{color:var(--gray);}
+.paris-item .p-amt{font-family:'DM Mono',monospace;font-weight:500;color:var(--cream);}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding:9px 13px;background:rgba(200,150,62,.12);border-radius:10px;border:1px solid rgba(200,150,62,.2);margin-bottom:8px;}
+.total-row .t-label{font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--gold);text-transform:uppercase;}
+.total-row .t-amount{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold);}
+.billet-row{display:flex;justify-content:space-between;align-items:center;padding:9px 13px;background:rgba(255,255,255,.05);border-radius:10px;border:1px solid rgba(255,255,255,.09);}
+.billet-row .b-label{font-size:11px;color:var(--gray);}
+.billet-row .b-amount{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--cream);}
+
+/* INPUT */
+.input-section{padding:10px 18px 18px;}
+.input-label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.input-label::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07);}
+.answer-display{background:rgba(0,0,0,.3);border:2px solid rgba(255,255,255,.14);border-radius:13px;padding:14px 18px;font-family:'Bebas Neue',sans-serif;font-size:40px;color:var(--cream);letter-spacing:2px;min-height:68px;display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px;transition:border-color .2s,background .2s;}
+.answer-display.correct{border-color:var(--green-light);background:rgba(26,122,74,.18);}
+.answer-display.wrong{border-color:var(--red-light);background:rgba(192,57,43,.18);}
+.cursor{display:inline-block;width:3px;height:32px;background:var(--gold);margin-left:4px;animation:blink 1s step-end infinite;vertical-align:middle;}
+@keyframes blink{50%{opacity:0;}}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px;}
+.num-btn{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);border-radius:12px;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:20px;font-weight:500;padding:15px;cursor:pointer;transition:all .1s;user-select:none;-webkit-user-select:none;}
+.num-btn:active{transform:scale(.93);background:rgba(255,255,255,.13);}
+.num-btn.delete{font-size:15px;color:var(--gray);}
+.num-btn.validate{grid-column:span 3;background:var(--green);border-color:var(--green);color:#fff;font-size:14px;font-weight:700;letter-spacing:1px;padding:16px;box-shadow:0 4px 16px rgba(26,122,74,.35);}
+.num-btn.validate:active{background:var(--green-dark);transform:scale(.98);}
+
+/* RESULT OVERLAY */
+.result-overlay{display:none;position:absolute;inset:0;border-radius:20px;align-items:center;justify-content:center;flex-direction:column;gap:7px;z-index:10;backdrop-filter:blur(4px);}
+.result-overlay.show{display:flex;}
+.result-overlay.correct-bg{background:rgba(13,31,20,.92);}
+.result-overlay.wrong-bg{background:rgba(13,31,20,.92);}
+.result-icon{font-size:48px;line-height:1;}
+.result-text{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;}
+.result-text.ok{color:var(--green-light);}
+.result-text.ko{color:var(--red-light);}
+.result-sub{font-size:12px;color:var(--gray);}
+.result-time{font-family:'DM Mono',monospace;font-size:15px;}
+.result-time.fast{color:var(--green-light);}
+.result-time.medium{color:var(--gold);}
+.result-time.slow{color:var(--red-light);}
+.result-answer{font-family:'DM Mono',monospace;font-size:18px;color:var(--gold);}
+.result-vs{font-size:11px;padding:5px 12px;border-radius:20px;background:rgba(255,255,255,.07);color:var(--gray);}
+.result-vs.record{background:rgba(200,150,62,.25);color:var(--gold-light);font-weight:600;}
+.next-btn{margin-top:10px;background:var(--gold);border:none;border-radius:30px;color:var(--dark);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;padding:12px 30px;cursor:pointer;box-shadow:0 4px 12px rgba(200,150,62,.3);transition:transform .1s;}
+.next-btn:active{transform:scale(.97);}
+
+/* END SCREEN */
+.end-screen{display:none;margin:16px 20px;text-align:center;}
+.end-screen.show{display:block;}
+.end-trophy{font-size:60px;margin-bottom:10px;display:block;}
+.end-title{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;color:var(--gold);margin-bottom:4px;}
+.end-sub{font-size:13px;color:var(--gray);margin-bottom:18px;}
+.end-stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
+.end-stat{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:14px 10px;}
+.end-stat .es-val{font-family:'Bebas Neue',sans-serif;font-size:30px;display:block;color:var(--gold);}
+.end-stat .es-lbl{font-size:10px;color:var(--gray);letter-spacing:.5px;}
+
+/* RECORD ROW */
+.record-row{display:flex;align-items:center;gap:8px;background:rgba(200,150,62,.1);border:1px solid rgba(200,150,62,.2);border-radius:10px;padding:9px 13px;margin-bottom:14px;}
+.record-row .r-icon{font-size:18px;}
+.record-row .r-info{flex:1;font-size:12px;color:var(--gray);}
+.record-row .r-val{font-family:'DM Mono',monospace;font-size:14px;color:var(--gold-light);font-weight:500;}
+
+/* PALIER CHART */
+.palier-chart{background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:16px;text-align:left;}
+.palier-chart-title{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:14px;}
+.palier-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.palier-row:last-child{margin-bottom:0;}
+.palier-icon{font-size:18px;width:24px;text-align:center;flex-shrink:0;}
+.palier-info{flex:1;}
+.palier-name{font-size:12px;font-weight:600;line-height:1.2;}
+.palier-name.bronze{color:#c9a96e;}.palier-name.argent{color:#bcc8d4;}.palier-name.or{color:var(--gold-light);}.palier-name.platine{color:#7dfff0;}
+.palier-cond{font-size:10px;color:var(--gray);}
+.palier-prog-wrap{height:5px;background:rgba(255,255,255,.07);border-radius:3px;margin-top:4px;overflow:hidden;}
+.palier-prog-fill{height:100%;border-radius:3px;transition:width .6s ease;}
+.palier-prog-fill.bronze{background:#c9a96e;}.palier-prog-fill.argent{background:#bcc8d4;}.palier-prog-fill.or{background:var(--gold);}.palier-prog-fill.platine{background:#7dfff0;}
+.palier-status{font-size:12px;flex-shrink:0;}
+.session-palier{margin-top:10px;padding:8px 12px;background:rgba(255,255,255,.05);border-radius:10px;font-size:12px;color:var(--gray);text-align:left;}
+
+/* BUTTONS */
+.restart-btn{width:100%;background:var(--green);border:none;border-radius:13px;color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;padding:17px;cursor:pointer;box-shadow:0 4px 16px rgba(26,122,74,.35);margin-bottom:9px;transition:transform .1s;}
+.restart-btn:active{transform:scale(.98);}
+.change-level-btn{width:100%;background:transparent;border:1px solid rgba(255,255,255,.13);border-radius:13px;color:var(--gray);font-family:'DM Sans',sans-serif;font-size:14px;padding:13px;cursor:pointer;transition:all .2s;}
+.change-level-btn:active{background:rgba(255,255,255,.05);}
+
+/* TOAST */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:linear-gradient(135deg,#c8963e,#e8b86d);color:var(--dark);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;padding:10px 20px;border-radius:30px;box-shadow:0 6px 20px rgba(200,150,62,.5);transition:transform .35s cubic-bezier(.34,1.56,.64,1);z-index:100;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="header">
+  <div class="logo">PMU</div>
+  <div class="header-text">
+    <h1>Rendu Monnaie</h1>
+    <p>ENTRAÎNEUR GUICHET HIPPODROME</p>
+  </div>
+</div>
+
+<div class="mode-switch">
+  <button class="mode-btn active-normal" id="btn-normal" onclick="setMode('normal',this)"><span>📋</span>Mode Normal</button>
+  <button class="mode-btn" id="btn-chrono" onclick="setMode('chrono',this)"><span>⏱️</span>Mode Chrono</button>
+</div>
+
+<div class="levels">
+  <button class="level-btn active" onclick="setLevel('debutant',this)">🟢 Débutant</button>
+  <button class="level-btn" onclick="setLevel('intermediaire',this)">🟡 Intermédiaire</button>
+  <button class="level-btn" onclick="setLevel('avance',this)">🔴 Avancé</button>
+  <button class="level-btn" onclick="setLevel('pro',this)">⚫ Pro PMU</button>
+</div>
+
+<div class="chrono-header" id="chrono-header">
+  <div class="chrono-big" id="chrono-big">60</div>
+  <div class="chrono-right">
+    <div class="chrono-label">Temps restant</div>
+    <div class="chrono-bar-wrap"><div class="chrono-bar-fill" id="chrono-bar" style="width:100%;background:var(--green-light)"></div></div>
+    <div class="chrono-target" id="chrono-target">Objectif : <strong id="target-val">Réponds à un max !</strong></div>
+  </div>
+</div>
+
+<div class="palier-badge" id="palier-badge"></div>
+
+<div class="scorebar">
+  <div class="score-pill good">   <span class="val" id="score-ok">0</span>     <span class="lbl">Justes</span>    </div>
+  <div class="score-pill bad">    <span class="val" id="score-ko">0</span>     <span class="lbl">Erreurs</span>   </div>
+  <div class="score-pill streak"> <span class="val" id="score-streak">0</span> <span class="lbl">Série 🔥</span>  </div>
+  <div class="score-pill avgtime"><span class="val" id="score-time">—</span>   <span class="lbl">Moy./calc</span></div>
+</div>
+
+<div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+<div class="card" id="main-card">
+  <div class="card-header">
+    <span class="type-badge" id="pari-type">—</span>
+    <span class="q-count" id="q-count">1/10</span>
+  </div>
+  <div class="ticket-section">
+    <div class="ticket-label">📋 Paris du client</div>
+    <div class="paris-list" id="paris-list"></div>
+    <div class="total-row">
+      <span class="t-label">Total à payer</span>
+      <span class="t-amount" id="total-display">—</span>
+    </div>
+    <div class="billet-row">
+      <span class="b-label">💵 Client donne</span>
+      <span class="b-amount" id="billet-display">—</span>
+    </div>
+  </div>
+  <div class="input-section">
+    <div class="input-label">Vous rendez</div>
+    <div class="answer-display" id="answer-display">
+      <span id="answer-text">0</span><span class="cursor"></span>
+    </div>
+    <div class="numpad">
+      <button class="num-btn" onclick="addDigit('1')">1</button>
+      <button class="num-btn" onclick="addDigit('2')">2</button>
+      <button class="num-btn" onclick="addDigit('3')">3</button>
+      <button class="num-btn" onclick="addDigit('4')">4</button>
+      <button class="num-btn" onclick="addDigit('5')">5</button>
+      <button class="num-btn" onclick="addDigit('6')">6</button>
+      <button class="num-btn" onclick="addDigit('7')">7</button>
+      <button class="num-btn" onclick="addDigit('8')">8</button>
+      <button class="num-btn" onclick="addDigit('9')">9</button>
+      <button class="num-btn" onclick="addComma()">,</button>
+      <button class="num-btn" onclick="addDigit('0')">0</button>
+      <button class="num-btn delete" onclick="deleteDigit()">⌫</button>
+      <button class="num-btn validate" onclick="validate()">✓ VALIDER</button>
+    </div>
+  </div>
+  <div class="result-overlay" id="result-overlay">
+    <span class="result-icon" id="result-icon"></span>
+    <span class="result-text" id="result-text"></span>
+    <span class="result-sub"  id="result-sub"></span>
+    <span class="result-time" id="result-time"></span>
+    <span class="result-vs"   id="result-vs"></span>
+    <span class="result-answer" id="result-answer"></span>
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">Question suivante →</button>
+  </div>
+</div>
+
+<div class="end-screen" id="end-screen">
+  <span class="end-trophy" id="end-trophy">🏆</span>
+  <div class="end-title" id="end-title">Session terminée !</div>
+  <div class="end-sub"   id="end-sub"></div>
+  <div class="record-row" id="record-row" style="display:none">
+    <span class="r-icon">🏅</span>
+    <span class="r-info">Nouveau record :</span>
+    <span class="r-val" id="record-val"></span>
+  </div>
+  <div class="end-stats">
+    <div class="end-stat"><span class="es-val" id="end-score">—</span><span class="es-lbl">Score</span></div>
+    <div class="end-stat"><span class="es-val" id="end-streak">—</span><span class="es-lbl">Meilleure série</span></div>
+    <div class="end-stat"><span class="es-val" id="end-avg">—</span><span class="es-lbl">Temps moyen</span></div>
+    <div class="end-stat"><span class="es-val" id="end-rate">—</span><span class="es-lbl">Réussite</span></div>
+  </div>
+  <div class="palier-chart" id="palier-chart"></div>
+  <button class="restart-btn" onclick="restartSameLevel()">🔄 Rejouer ce niveau</button>
+  <button class="change-level-btn" onclick="showLevels()">Changer de niveau</button>
+</div>
+
+<div class="toast" id="toast"></div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════
+const PARIS_TYPES=[
+  {label:'Simple Gagnant',amounts:[1.5,2,3,5]},
+  {label:'Simple Placé',amounts:[1.5,2,3,5]},
+  {label:'Couplé Gagnant',amounts:[2,4,6,8]},
+  {label:'Couplé Placé',amounts:[2,4,6]},
+  {label:'Tiercé',amounts:[2,4,6,8,12,24,48]},
+  {label:'Quarté+',amounts:[2,4,6,12,24,36,60]},
+  {label:'Quinté+',amounts:[3,6,9,12,24,30,60]},
+  {label:'Pick 5',amounts:[2,4,6,10]},
+];
+
+const LEVELS={
+  debutant:     {name:'Débutant',      billets:[5,10],         maxParis:1, amounts:[1.5,2,3,4,6,8],                   sessionSize:10,chronoSec:60},
+  intermediaire:{name:'Intermédiaire', billets:[10,20],        maxParis:1, amounts:[1.5,2,3,4,6,8,12,13.5,15],        sessionSize:10,chronoSec:90},
+  avance:       {name:'Avancé',        billets:[20,50],        maxParis:2, amounts:[1.5,2,3,6,8,12,15,24,30,36],      sessionSize:12,chronoSec:120},
+  pro:          {name:'Pro PMU',       billets:[10,20,50,100], maxParis:3, amounts:[1.5,2,3,6,8,12,15,24,30,36,40,60],sessionSize:15,chronoSec:150},
+};
+
+// Paliers: minRate (%), maxAvg (s ou null)
+const PALIERS={
+  debutant:     [{id:'bronze',label:'Bronze', css:'bronze', icon:'🥉',minRate:60,maxAvg:null,desc:'60% de réussite'},
+                 {id:'argent',label:'Argent', css:'argent', icon:'🥈',minRate:80,maxAvg:null,desc:'80% de réussite'},
+                 {id:'or',    label:'Or',     css:'or',     icon:'🥇',minRate:90,maxAvg:5,   desc:'90% + moy < 5s'},
+                 {id:'platine',label:'Platine',css:'platine',icon:'💎',minRate:100,maxAvg:3,  desc:'100% + moy < 3s'}],
+  intermediaire:[{id:'bronze',label:'Bronze', css:'bronze', icon:'🥉',minRate:60,maxAvg:null,desc:'60% de réussite'},
+                 {id:'argent',label:'Argent', css:'argent', icon:'🥈',minRate:80,maxAvg:null,desc:'80% de réussite'},
+                 {id:'or',    label:'Or',     css:'or',     icon:'🥇',minRate:90,maxAvg:6,   desc:'90% + moy < 6s'},
+                 {id:'platine',label:'Platine',css:'platine',icon:'💎',minRate:100,maxAvg:4,  desc:'100% + moy < 4s'}],
+  avance:       [{id:'bronze',label:'Bronze', css:'bronze', icon:'🥉',minRate:60,maxAvg:null,desc:'60% de réussite'},
+                 {id:'argent',label:'Argent', css:'argent', icon:'🥈',minRate:75,maxAvg:null,desc:'75% de réussite'},
+                 {id:'or',    label:'Or',     css:'or',     icon:'🥇',minRate:90,maxAvg:7,   desc:'90% + moy < 7s'},
+                 {id:'platine',label:'Platine',css:'platine',icon:'💎',minRate:100,maxAvg:5,  desc:'100% + moy < 5s'}],
+  pro:          [{id:'bronze',label:'Bronze', css:'bronze', icon:'🥉',minRate:60,maxAvg:null,desc:'60% de réussite'},
+                 {id:'argent',label:'Argent', css:'argent', icon:'🥈',minRate:75,maxAvg:null,desc:'75% de réussite'},
+                 {id:'or',    label:'Or',     css:'or',     icon:'🥇',minRate:90,maxAvg:8,   desc:'90% + moy < 8s'},
+                 {id:'platine',label:'Platine',css:'platine',icon:'💎',minRate:100,maxAvg:5,  desc:'100% + moy < 5s'}],
+};
+
+function checkPalier(lvl,rate,avgTime){
+  let best=null;
+  for(const p of PALIERS[lvl]){
+    const rOk=rate>=p.minRate;
+    const tOk=p.maxAvg===null||(avgTime!==null&&avgTime<=p.maxAvg);
+    if(rOk&&tOk)best=p;
+  }
+  return best;
+}
+
+// ════════════════════════════════════════════
+// RECORDS — localStorage
+// ════════════════════════════════════════════
+function getRecs(){try{return JSON.parse(localStorage.getItem('pmu_v2')||'{}');}catch{return{};}}
+function saveRecs(r){try{localStorage.setItem('pmu_v2',JSON.stringify(r));}catch{}}
+function getRec(lvl,mode){return getRecs()[lvl+'_'+mode]||null;}
+function updateRec(lvl,mode,rate,avgTime,streak){
+  const recs=getRecs();
+  const key=lvl+'_'+mode;
+  const ex=recs[key]||{bestRate:0,bestAvgTime:null,bestStreak:0,sessions:0};
+  let isNew=false;
+  ex.sessions=(ex.sessions||0)+1;
+  if(rate>ex.bestRate){ex.bestRate=rate;isNew=true;}
+  if(avgTime!==null&&(ex.bestAvgTime===null||avgTime<ex.bestAvgTime)){ex.bestAvgTime=avgTime;isNew=true;}
+  if(streak>ex.bestStreak){ex.bestStreak=streak;isNew=true;}
+  recs[key]=ex;saveRecs(recs);
+  return isNew;
+}
+
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+let S={
+  mode:'normal',level:'debutant',
+  qIndex:0,correct:0,wrong:0,streak:0,bestStreak:0,
+  times:[],qStart:0,
+  currentAnswer:'',hasComma:false,
+  currentQ:null,inputLocked:false,
+  chronoRemaining:60,chronoTotal:60,chronoInterval:null,
+};
+
+// ════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════
+function fmt(n){if(n==null)return'—';return(n%1===0?n.toFixed(0):n.toFixed(2).replace('.',','))+' €';}
+function avg(arr){if(!arr.length)return null;return Math.round(arr.reduce((a,b)=>a+b,0)/arr.length*10)/10;}
+function rand(arr){return arr[Math.floor(Math.random()*arr.length)];}
+
+// ════════════════════════════════════════════
+// GENERATOR
+// ════════════════════════════════════════════
+function genQ(){
+  const cfg=LEVELS[S.level];
+  const n=cfg.maxParis>1&&Math.random()<0.35?2:1;
+  let paris=[],total=0;
+  for(let i=0;i<n;i++){
+    const t=rand(PARIS_TYPES);
+    const a=rand(cfg.amounts);
+    paris.push({type:t.label,amount:a});
+    total+=a;
+  }
+  total=Math.round(total*100)/100;
+  const vb=cfg.billets.filter(b=>b>total);
+  if(!vb.length)return genQ();
+  const billet=rand(vb);
+  let extra=0;
+  if(S.level==='pro'&&Math.random()<0.28&&total%1===0.5)extra=0.5;
+  const totalGiven=billet+extra;
+  const rendu=Math.round((totalGiven-total)*100)/100;
+  return{paris,total,billet,extra,totalGiven,rendu,mainType:n>1?'Multi-paris':paris[0].type};
+}
+
+// ════════════════════════════════════════════
+// CHRONO
+// ════════════════════════════════════════════
+function startChrono(){
+  const cfg=LEVELS[S.level];
+  S.chronoTotal=cfg.chronoSec;
+  S.chronoRemaining=cfg.chronoSec;
+  tickChrono();
+  S.chronoInterval=setInterval(tickChrono,100);
+}
+function tickChrono(){
+  renderChrono();
+  if(S.chronoRemaining<=0){
+    clearInterval(S.chronoInterval);S.chronoInterval=null;
+    if(!S.inputLocked){S.wrong++;S.streak=0;updateScorebar();}
+    setTimeout(showEndScreen,500);
+    return;
+  }
+  S.chronoRemaining=Math.round((S.chronoRemaining-0.1)*10)/10;
+}
+function stopChrono(){if(S.chronoInterval){clearInterval(S.chronoInterval);S.chronoInterval=null;}}
+function renderChrono(){
+  const el=document.getElementById('chrono-big');
+  const bar=document.getElementById('chrono-bar');
+  const secs=Math.ceil(Math.max(0,S.chronoRemaining));
+  el.textContent=secs;
+  const pct=Math.max(0,(S.chronoRemaining/S.chronoTotal)*100);
+  bar.style.width=pct+'%';
+  el.className='chrono-big';
+  if(pct<20){el.classList.add('danger');bar.style.background='var(--red-light)';}
+  else if(pct<40){el.classList.add('warning');bar.style.background='#f39c12';}
+  else{bar.style.background='var(--green-light)';}
+  // target
+  const rec=getRec(S.level,'chrono');
+  const tv=document.getElementById('target-val');
+  if(rec&&rec.bestRate){
+    const next=PALIERS[S.level].find(p=>p.minRate>rec.bestRate&&(p.maxAvg===null||(rec.bestAvgTime&&rec.bestAvgTime<=p.maxAvg)));
+    if(next)tv.textContent=`Viser ${next.icon} ${next.label} : ${next.desc}`;
+    else tv.textContent=`Record : ${rec.bestRate}% — ${rec.bestAvgTime?rec.bestAvgTime.toFixed(1)+'s moy.':''} — peut mieux faire ?`;
+  } else {
+    tv.textContent='Réponds à un max de questions !';
+  }
+}
+
+// ════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════
+function renderQ(q){
+  const cfg=LEVELS[S.level];
+  document.getElementById('pari-type').textContent=q.mainType;
+  document.getElementById('q-count').textContent=S.mode==='normal'?`${S.qIndex+1}/${cfg.sessionSize}`:`#${S.qIndex+1}`;
+  const list=document.getElementById('paris-list');
+  list.innerHTML=q.paris.map(p=>`<div class="paris-item"><span class="p-type">${p.type}</span><span class="p-amt">${fmt(p.amount)}</span></div>`).join('');
+  document.getElementById('total-display').textContent=fmt(q.total);
+  let bt=fmt(q.billet);
+  if(q.extra>0)bt+=` + ${fmt(q.extra)}`;
+  document.getElementById('billet-display').textContent=bt;
+  S.currentAnswer='';S.hasComma=false;S.inputLocked=false;S.qStart=Date.now();
+  updateDisp();
+  const ov=document.getElementById('result-overlay');
+  ov.classList.remove('show','correct-bg','wrong-bg');
+  if(S.mode==='normal'){
+    const pct=(S.qIndex/cfg.sessionSize)*100;
+    document.getElementById('progress-fill').style.width=pct+'%';
+  }
+}
+
+// ════════════════════════════════════════════
+// INPUT
+// ════════════════════════════════════════════
+function updateDisp(){document.getElementById('answer-text').textContent=S.currentAnswer||'0';}
+function addDigit(d){
+  if(S.inputLocked)return;
+  if(S.hasComma){const p=S.currentAnswer.split(',');if(p[1]&&p[1].length>=2)return;}
+  if(!S.hasComma&&S.currentAnswer.length>=4)return;
+  S.currentAnswer=(S.currentAnswer===''||S.currentAnswer==='0')?d:S.currentAnswer+d;
+  updateDisp();
+}
+function addComma(){
+  if(S.inputLocked||S.hasComma)return;
+  if(!S.currentAnswer)S.currentAnswer='0';
+  S.currentAnswer+=',';S.hasComma=true;updateDisp();
+}
+function deleteDigit(){
+  if(S.inputLocked||!S.currentAnswer)return;
+  if(S.currentAnswer.slice(-1)===',')S.hasComma=false;
+  S.currentAnswer=S.currentAnswer.slice(0,-1);updateDisp();
+}
+function parseAns(){return parseFloat(S.currentAnswer.replace(',','.'))||0;}
+
+// ════════════════════════════════════════════
+// VALIDATE
+// ════════════════════════════════════════════
+function validate(){
+  if(S.inputLocked||!S.currentQ)return;
+  const elapsed=parseFloat(((Date.now()-S.qStart)/1000).toFixed(2));
+  const ua=Math.round(parseAns()*100)/100;
+  const ok=Math.abs(ua-S.currentQ.rendu)<0.001;
+  S.inputLocked=true;
+  S.times.push(elapsed);
+  if(ok){S.correct++;S.streak++;if(S.streak>S.bestStreak)S.bestStreak=S.streak;}
+  else{S.wrong++;S.streak=0;}
+  updateScorebar();
+  showOverlay(ok,S.currentQ,elapsed);
+  if(S.mode==='chrono'){setTimeout(()=>{if(S.chronoRemaining>0)nextQ();},ok?800:1500);}
+}
+
+function showOverlay(ok,q,elapsed){
+  const ov=document.getElementById('result-overlay');
+  const rec=getRec(S.level,S.mode);
+  const bestAvg=rec?rec.bestAvgTime:null;
+
+  document.getElementById('result-icon').textContent=ok?(elapsed<3?'⚡':'✅'):'❌';
+  const msgs=['BRAVO !','PARFAIT !','EXACT !','SUPER !','NICKEL !'];
+  document.getElementById('result-text').textContent=ok?rand(msgs):'RATÉ';
+  document.getElementById('result-text').className='result-text '+(ok?'ok':'ko');
+  document.getElementById('result-sub').textContent=ok?'':'La bonne réponse était :';
+  document.getElementById('result-answer').textContent=ok?'':fmt(q.rendu);
+
+  const te=document.getElementById('result-time');
+  if(ok){
+    te.textContent=elapsed.toFixed(1)+'s';
+    te.className=elapsed<3?'result-time fast':elapsed<6?'result-time medium':'result-time slow';
+  } else {te.textContent='';te.className='result-time';}
+
+  const ve=document.getElementById('result-vs');
+  if(ok&&bestAvg!==null){
+    const diff=Math.round((elapsed-bestAvg)*10)/10;
+    if(diff<0){ve.textContent=`⚡ ${Math.abs(diff)}s plus rapide que ta meilleure moyenne !`;ve.className='result-vs record';}
+    else if(diff===0){ve.textContent=`= Meilleure moyenne (${bestAvg}s)`;ve.className='result-vs';}
+    else{ve.textContent=`+${diff}s vs ta meilleure moyenne (${bestAvg}s)`;ve.className='result-vs';}
+  } else {ve.textContent='';ve.className='result-vs';}
+
+  document.getElementById('next-btn').style.display=S.mode==='chrono'?'none':'';
+  ov.classList.add('show',ok?'correct-bg':'wrong-bg');
+}
+
+function nextQ(){
+  const cfg=LEVELS[S.level];
+  S.qIndex++;
+  if(S.mode==='normal'&&S.qIndex>=cfg.sessionSize){showEndScreen();return;}
+  S.currentQ=genQ();renderQ(S.currentQ);
+}
+function nextQuestion(){nextQ();}
+
+// ════════════════════════════════════════════
+// SCOREBAR
+// ════════════════════════════════════════════
+function updateScorebar(){
+  document.getElementById('score-ok').textContent=S.correct;
+  document.getElementById('score-ko').textContent=S.wrong;
+  document.getElementById('score-streak').textContent=S.streak;
+  const a=avg(S.times);
+  document.getElementById('score-time').textContent=a!==null?a.toFixed(1)+'s':'—';
+}
+
+// ════════════════════════════════════════════
+// END SCREEN
+// ════════════════════════════════════════════
+function showEndScreen(){
+  stopChrono();
+  document.getElementById('main-card').style.display='none';
+  document.getElementById('chrono-header').classList.remove('show');
+  document.getElementById('end-screen').classList.add('show');
+  document.getElementById('progress-fill').style.width='100%';
+
+  const total=S.correct+S.wrong;
+  const rate=total?Math.round((S.correct/total)*100):0;
+  const avgT=avg(S.times);
+
+  let trophy='🏆',title='Excellent !',sub='Tu es prêt pour le guichet PMU !';
+  if(rate<50){trophy='📚';title='Continue !';sub='Révise les compléments et réessaie.';}
+  else if(rate<75){trophy='💪';title='Bon début !';sub='Encore un peu de pratique !';}
+  else if(rate<90){trophy='🥇';title='Très bon score !';sub='Quelques sessions encore et tu seras imbattable.';}
+
+  document.getElementById('end-trophy').textContent=trophy;
+  document.getElementById('end-title').textContent=title;
+  document.getElementById('end-sub').textContent=sub;
+  document.getElementById('end-score').textContent=`${S.correct}/${total}`;
+  document.getElementById('end-streak').textContent=S.bestStreak;
+  document.getElementById('end-avg').textContent=avgT!==null?avgT.toFixed(1)+'s':'—';
+  document.getElementById('end-rate').textContent=rate+'%';
+
+  const isNew=updateRec(S.level,S.mode,rate,avgT,S.bestStreak);
+  const rec=getRec(S.level,S.mode);
+
+  if(isNew){
+    showToast('🏅 Nouveau record personnel !');
+    document.getElementById('record-row').style.display='flex';
+    document.getElementById('record-val').textContent=
+      rec.bestRate+'%'+(rec.bestAvgTime?' — '+rec.bestAvgTime.toFixed(1)+'s moy.':'');
+  } else {
+    document.getElementById('record-row').style.display='none';
+  }
+
+  renderPalierChart(rate,avgT,rec);
+}
+
+function renderPalierChart(rate,avgT,rec){
+  const list=PALIERS[S.level];
+  const bestRate=rec?rec.bestRate:0;
+  const bestAvg=rec?rec.bestAvgTime:null;
+  let html=`<div class="palier-chart-title">📊 Paliers — ${LEVELS[S.level].name} · Mode ${S.mode==='chrono'?'Chrono':'Normal'}</div>`;
+
+  for(const p of list){
+    const rOk=bestRate>=p.minRate;
+    const tOk=p.maxAvg===null||(bestAvg!==null&&bestAvg<=p.maxAvg);
+    const done=rOk&&tOk;
+    // progress bar = how close to unlocking
+    let prog=Math.min(100,Math.round((bestRate/p.minRate)*100));
+    if(p.maxAvg!==null&&bestAvg!==null){
+      const tp=Math.min(100,Math.round((p.maxAvg/bestAvg)*100));
+      prog=Math.min(prog,tp);
+    } else if(p.maxAvg!==null&&bestAvg===null){prog=Math.min(prog,0);}
+    html+=`<div class="palier-row">
+      <span class="palier-icon">${p.icon}</span>
+      <div class="palier-info">
+        <div class="palier-name ${p.css}">${p.label}</div>
+        <div class="palier-cond">${p.desc}</div>
+        <div class="palier-prog-wrap"><div class="palier-prog-fill ${p.css}" style="width:${done?100:prog}%"></div></div>
+      </div>
+      <span class="palier-status">${done?'✅':'—'}</span>
+    </div>`;
+  }
+
+  const sp=checkPalier(S.level,rate,avgT);
+  if(sp)html+=`<div class="session-palier">Cette session : <strong style="color:var(--cream)">${sp.icon} ${sp.label}</strong></div>`;
+  document.getElementById('palier-chart').innerHTML=html;
+}
+
+// ════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════
+let _tt;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ════════════════════════════════════════════
+// PALIER BADGE (top, pendant la session)
+// ════════════════════════════════════════════
+function updatePalierBadge(){
+  const rec=getRec(S.level,S.mode);
+  const badge=document.getElementById('palier-badge');
+  if(!rec){badge.classList.remove('show');return;}
+  const best=checkPalier(S.level,rec.bestRate,rec.bestAvgTime);
+  if(!best){badge.classList.remove('show');return;}
+  badge.className=`palier-badge show ${best.css}`;
+  badge.innerHTML=`${best.icon} <strong>Palier ${best.label} atteint</strong>&nbsp;— Vise le suivant !`;
+}
+
+// ════════════════════════════════════════════
+// CONTROLS
+// ════════════════════════════════════════════
+function setMode(mode,btn){
+  S.mode=mode;
+  document.getElementById('btn-normal').className='mode-btn'+(mode==='normal'?' active-normal':'');
+  document.getElementById('btn-chrono').className='mode-btn'+(mode==='chrono'?' active-chrono':'');
+  startSession();
+}
+function setLevel(lvl,btn){
+  document.querySelectorAll('.level-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  S.level=lvl;startSession();
+}
+function startSession(){
+  stopChrono();
+  S.qIndex=0;S.correct=0;S.wrong=0;S.streak=0;S.bestStreak=0;S.times=[];S.inputLocked=false;
+  document.getElementById('end-screen').classList.remove('show');
+  document.getElementById('main-card').style.display='';
+  document.getElementById('progress-fill').style.width='0%';
+  updateScorebar();
+  updatePalierBadge();
+  if(S.mode==='chrono'){document.getElementById('chrono-header').classList.add('show');startChrono();}
+  else{document.getElementById('chrono-header').classList.remove('show');}
+  S.currentQ=genQ();renderQ(S.currentQ);
+}
+function restartSameLevel(){startSession();}
+function showLevels(){
+  document.getElementById('end-screen').classList.remove('show');
+  document.getElementById('main-card').style.display='';
+  window.scrollTo(0,0);
+}
+
+// INIT
+startSession();
+</script>
+</body>
+</html>
